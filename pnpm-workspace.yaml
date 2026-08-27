@@ -1,6 +1,17 @@
+packages:
+  - "apps/*"
+  - "libs/*"
+
 autoInstallPeers: true
 allowBuilds:
+  '@prisma/client': set this to true or false
+  '@prisma/engines': set this to true or false
+  esbuild: true
+  msgpackr-extract: false
   nx: true
+  prisma: set this to true or false
+  unrs-resolver: false
+  workerd: false
 minimumReleaseAgeExclude:
   - '@nx/devkit@23.1.2'
   - '@nx/js@23.1.2'
@@ -16,3 +27,6 @@ minimumReleaseAgeExclude:
   - '@nx/nx-win32-x64-msvc@23.1.2'
   - '@nx/workspace@23.1.2'
   - nx@23.1.2
+  - '@nx/eslint-plugin@23.1.2'
+  - '@nx/eslint@23.1.2'
+  - '@nx/jest@23.1.2'

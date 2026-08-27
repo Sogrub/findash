@@ -2,12 +2,38 @@
   "name": "@findash/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres",
+    "db:generate": "pnpm --filter @findash/database db:generate",
+    "db:migrate": "pnpm --filter @findash/database db:migrate",
+    "db:migrate:prod": "pnpm --filter @findash/database db:migrate:prod"
+  },
   "private": true,
-  "dependencies": {},
   "devDependencies": {
+    "@eslint/js": "^9.8.0",
+    "@nx/eslint": "23.1.2",
+    "@nx/eslint-plugin": "23.1.2",
+    "@nx/jest": "23.1.2",
     "@nx/js": "23.1.2",
     "@nx/workspace": "23.1.2",
-    "nx": "23.1.2"
+    "@swc/helpers": "~0.5.18",
+    "@types/jest": "~30.0.0",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.8.0",
+    "eslint-config-prettier": "^10.0.0",
+    "jest": "~30.3.0",
+    "jest-environment-node": "~30.3.0",
+    "jest-util": "~30.3.0",
+    "jsonc-eslint-parser": "^2.1.0",
+    "nx": "23.1.2",
+    "prettier": "~3.6.2",
+    "prisma": "5.22.0",
+    "ts-jest": "^29.4.7",
+    "ts-node": "10.9.1",
+    "tslib": "^2.3.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.58.0"
   }
 }

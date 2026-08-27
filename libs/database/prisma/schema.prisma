@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  document     String   @unique
+  fullName     String   @map("full_name")
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  avatarUrl    String?  @map("avatar_url")
+  status       UserStatus @default(ACTIVE)
+  roleId       String   @map("role_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  role       Role        @relation(fields: [roleId], references: [id])
+  account    Account?
+  userLogins UserLogin[]
+
+  @@map("users")
+}
+
+model UserLogin {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  success   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_logins")
+}
+
+model Account {
+  id            String      @id @default(uuid())
+  userId        String      @unique @map("user_id")
+  accountNumber String      @unique @map("account_number")
+  balance       Decimal     @default(0) @db.Decimal(18, 2)
+  type          AccountType @default(BASIC)
+  status        AccountStatus @default(ACTIVE)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  user                 User          @relation(fields: [userId], references: [id])
+  outgoingTransactions Transaction[] @relation("SourceAccount")
+  incomingTransactions Transaction[] @relation("DestAccount")
+
+  @@map("accounts")
+}
+
+model Transaction {
+  id              String            @id @default(uuid())
+  sourceAccountId String            @map("source_account_id")
+  destAccountId   String            @map("dest_account_id")
+  amount          Decimal           @db.Decimal(18, 2)
+  commission      Decimal           @db.Decimal(18, 2)
+  totalDeducted   Decimal           @map("total_deducted") @db.Decimal(18, 2)
+  status          TransactionStatus @default(PENDING)
+  authorizationCode String?         @map("authorization_code")
+  idempotencyKey  String            @unique @map("idempotency_key")
+  createdAt       DateTime          @default(now()) @map("created_at")
+
+  sourceAccount Account @relation("SourceAccount", fields: [sourceAccountId], references: [id])
+  destAccount   Account @relation("DestAccount", fields: [destAccountId], references: [id])
+
+  @@map("transactions")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum AccountType {
+  BASIC
+  PREMIUM
+  CORPORATE
+}
+
+enum AccountStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REJECTED
+}
