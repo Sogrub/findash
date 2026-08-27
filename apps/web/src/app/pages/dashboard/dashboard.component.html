@@ -15,8 +15,16 @@
               <span class="avatar-initials">{{ initials(user.fullName) }}</span>
             }
           </div>
-          <span class="user-name">{{ user.fullName }}</span>
+          <div class="user-info">
+            <span class="user-name">{{ user.fullName }}</span>
+            @if (user.role === 'CLIENT' && balance() !== null) {
+              <span class="user-balance">{{ balance() | currency:'USD':'symbol':'1.2-2' }}</span>
+            }
+          </div>
         </div>
+      }
+      @if (store.currentUser()?.role === 'ADMIN') {
+        <a mat-button routerLink="/admin/accounts">Cuentas</a>
       }
       <button mat-button (click)="logout()">Cerrar sesión</button>
     </div>

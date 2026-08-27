@@ -48,7 +48,7 @@ describe("AuthService", () => {
       providers: [
         AuthService,
         { provide: PrismaService, useValue: prisma },
-        { provide: JwtService, useValue: { sign: jest.fn().mockReturnValue("mock-jwt-token") } },
+        { provide: JwtService, useValue: { sign: jest.fn().mockReturnValue("mock-jwt-token"), decode: jest.fn() } },
       ],
     }).compile();
 
@@ -280,15 +280,53 @@ describe("AuthService", () => {
   // ── logout ──────────────────────────────────────────────────────────────────
 
   describe("logout", () => {
-    it("should increment jwtVersion to revoke all active tokens", async () => {
+    let jwtService: { sign: jest.Mock; decode: jest.Mock };
+
+    beforeEach(async () => {
+      // re-get jwtService reference from module
+      const module = await Test.createTestingModule({
+        providers: [
+          AuthService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: JwtService, useValue: { sign: jest.fn(), decode: jest.fn() } },
+        ],
+      }).compile();
+      service = module.get(AuthService);
+      jwtService = module.get(JwtService);
+    });
+
+    it("decodes the token and increments jwtVersion", async () => {
+      jwtService.decode.mockReturnValue({ sub: "user-uuid" });
       prisma.user.update.mockResolvedValue(mockUser);
 
-      await service.logout("user-uuid");
+      await service.logout("valid.jwt.token");
 
+      expect(jwtService.decode).toHaveBeenCalledWith("valid.jwt.token");
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: "user-uuid" },
         data: { jwtVersion: { increment: 1 } },
       });
+    });
+
+    it("does nothing when token is null", async () => {
+      await service.logout(null);
+
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when decoded token has no sub", async () => {
+      jwtService.decode.mockReturnValue({});
+
+      await service.logout("token.without.sub");
+
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it("does not throw when user is not found in DB", async () => {
+      jwtService.decode.mockReturnValue({ sub: "ghost-uuid" });
+      prisma.user.update.mockRejectedValue(new Error("Not found"));
+
+      await expect(service.logout("token")).resolves.toBeUndefined();
     });
   });
 });

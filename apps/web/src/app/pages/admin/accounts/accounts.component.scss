@@ -1,0 +1,237 @@
+.navbar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 100;
+  --mat-toolbar-container-background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-inner {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: #fff;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 20px;
+}
+
+.user-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+// ── Page body ────────────────────────────────────────────────────────────────
+
+.page-body {
+  padding-top: 88px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-inline: 24px;
+  padding-bottom: 48px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+}
+
+.subtitle {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.sort-controls {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.sort-select {
+  width: 180px;
+}
+
+// ── Grid ─────────────────────────────────────────────────────────────────────
+
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+// ── Account card ─────────────────────────────────────────────────────────────
+
+.account-card {
+  border-radius: 16px !important;
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12) !important;
+  }
+
+  mat-card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  mat-card-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 12px;
+  }
+}
+
+.account-number {
+  font-family: 'Courier New', monospace;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.05em;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.balance {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.status-active mat-chip,
+mat-chip.status-active {
+  --mdc-chip-label-text-color: #2e7d32;
+  --mdc-chip-container-color: #e8f5e9;
+}
+
+.status-inactive mat-chip,
+mat-chip.status-inactive {
+  --mdc-chip-label-text-color: #c62828;
+  --mdc-chip-container-color: #ffebee;
+}
+
+// ── Skeleton ─────────────────────────────────────────────────────────────────
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+%sk-block {
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--border) 25%, color-mix(in srgb, var(--border) 60%, transparent) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-card {
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sk-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sk-avatar {
+  @extend %sk-block;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sk-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sk-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sk-line {
+  @extend %sk-block;
+  height: 12px;
+}
+
+.sk-name    { width: 60%; }
+.sk-number  { width: 80%; }
+.sk-balance { width: 35%; height: 18px; }
+.sk-chip    { width: 20%; height: 24px; border-radius: 20px; }
+
+// ── Paginator ────────────────────────────────────────────────────────────────
+
+.paginator {
+  border-radius: 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+}

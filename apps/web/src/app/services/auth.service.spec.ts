@@ -58,10 +58,11 @@ describe('AuthService', () => {
 
   describe('decodeToken()', () => {
     function makeToken(payload: object): string {
-      const base64Url = btoa(JSON.stringify(payload))
-        .replace(/=/g, '')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_');
+      // Encode as UTF-8 bytes → base64url (same as JWT libraries do)
+      const json = JSON.stringify(payload);
+      const bytes = new TextEncoder().encode(json);
+      const base64 = btoa(String.fromCharCode(...bytes));
+      const base64Url = base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
       return `fakeheader.${base64Url}.fakesig`;
     }
 
@@ -83,6 +84,13 @@ describe('AuthService', () => {
       service.setToken(makeToken(payload));
 
       expect(service.decodeToken()?.avatarUrl).toBe('https://photos.google.com/avatar.jpg');
+    });
+
+    it('decodes names with accented characters correctly', () => {
+      const payload = { sub: '1', email: 'sofia@test.com', role: 'CLIENT', fullName: 'Sofía Gómez', avatarUrl: null, jv: 0 };
+      service.setToken(makeToken(payload));
+
+      expect(service.decodeToken()?.fullName).toBe('Sofía Gómez');
     });
 
     it('returns null when token is malformed', () => {

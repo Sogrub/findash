@@ -79,13 +79,17 @@ describe("AuthController", () => {
   // ── logout ──────────────────────────────────────────────────────────────────
 
   describe("logout", () => {
-    it("should call authService.logout with the user id from the JWT payload", async () => {
-      const user: JwtPayload = { sub: "user-uuid", email: "test@example.com", role: "CLIENT", jv: 0 };
+    it("passes the raw token from the Authorization header to authService.logout", async () => {
+      const result = await controller.logout("Bearer my-valid-token");
 
-      const result = await controller.logout(user);
-
-      expect(authService.logout).toHaveBeenCalledWith("user-uuid");
+      expect(authService.logout).toHaveBeenCalledWith("my-valid-token");
       expect(result).toEqual({ message: "Sesión cerrada correctamente" });
+    });
+
+    it("passes null when no Authorization header is present", async () => {
+      await controller.logout(undefined as unknown as string);
+
+      expect(authService.logout).toHaveBeenCalledWith(null);
     });
   });
 

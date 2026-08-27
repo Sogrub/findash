@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Ip,
@@ -46,12 +47,12 @@ export class AuthController {
   }
 
   @Post("logout")
-  @UseGuards(JwtGuard)
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Logout and revoke JWT" })
-  async logout(@CurrentUser() user: JwtPayload) {
-    await this.authService.logout(user.sub);
+  async logout(@Headers("authorization") authHeader: string) {
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    await this.authService.logout(token);
     return { message: "Sesión cerrada correctamente" };
   }
 

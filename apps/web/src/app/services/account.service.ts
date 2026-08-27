@@ -12,14 +12,54 @@ export interface AccountInfo {
   status: string;
 }
 
+export interface AccountListItem {
+  accountNumber: string;
+  fullName: string;
+  balance: number;
+  status: string;
+}
+
+export interface AccountListResponse {
+  data: AccountListItem[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export type AccountSortField = 'fullName' | 'balance' | 'status' | 'createdAt';
+export type SortOrder = 'asc' | 'desc';
+
 @Injectable({ providedIn: 'root' })
 export class AccountService {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
 
-  getMyAccount(): Observable<AccountInfo> {
+  private get authHeaders(): HttpHeaders | undefined {
     const token = this.authService.getToken();
-    const headers = token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : undefined;
-    return this.http.get<AccountInfo>(`${API_URL}/accounts/me`, { headers });
+    return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : undefined;
+  }
+
+  getMyAccount(): Observable<AccountInfo> {
+    return this.http.get<AccountInfo>(`${API_URL}/accounts/me`, { headers: this.authHeaders });
+  }
+
+  listAccounts(params: {
+    page: number;
+    limit: number;
+    sortBy: AccountSortField;
+    sortOrder: SortOrder;
+  }): Observable<AccountListResponse> {
+    return this.http.get<AccountListResponse>(`${API_URL}/accounts`, {
+      headers: this.authHeaders,
+      params: {
+        page: String(params.page),
+        limit: String(params.limit),
+        sortBy: params.sortBy,
+        sortOrder: params.sortOrder,
+      },
+    });
   }
 }

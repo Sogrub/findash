@@ -1,0 +1,99 @@
+<mat-toolbar class="navbar">
+  <div class="nav-inner">
+    <div class="logo">
+      <span class="logo-icon">◆</span>
+      <span>FinDash</span>
+    </div>
+    <div class="nav-right">
+      @if (store.currentUser(); as user) {
+        <span class="admin-badge">Admin</span>
+        <span class="user-name">{{ user.fullName }}</span>
+      }
+      <a mat-button routerLink="/dashboard">Dashboard</a>
+      <button mat-button (click)="logout()">Cerrar sesión</button>
+    </div>
+  </div>
+</mat-toolbar>
+
+<div class="page-body">
+  <div class="page-header">
+    <div>
+      <h1>Cuentas</h1>
+      <p class="subtitle">{{ total() }} cuenta{{ total() !== 1 ? 's' : '' }} registrada{{ total() !== 1 ? 's' : '' }}</p>
+    </div>
+
+    <div class="sort-controls">
+      <mat-form-field appearance="outline" class="sort-select">
+        <mat-label>Ordenar por</mat-label>
+        <mat-select [(ngModel)]="sortBy" (ngModelChange)="onSortChange()">
+          @for (field of sortFields; track field.value) {
+            <mat-option [value]="field.value">{{ field.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="sort-select">
+        <mat-label>Dirección</mat-label>
+        <mat-select [(ngModel)]="sortOrder" (ngModelChange)="onSortChange()">
+          <mat-option value="asc">Ascendente</mat-option>
+          <mat-option value="desc">Descendente</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="accounts-grid">
+      @for (i of skeletonItems; track i) {
+        <div class="skeleton-card">
+          <div class="sk-header">
+            <div class="sk-avatar"></div>
+            <div class="sk-lines">
+              <div class="sk-line sk-name"></div>
+              <div class="sk-line sk-number"></div>
+            </div>
+          </div>
+          <div class="sk-footer">
+            <div class="sk-line sk-balance"></div>
+            <div class="sk-line sk-chip"></div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="accounts-grid">
+      @for (account of accounts(); track account.accountNumber) {
+        <mat-card class="account-card" appearance="outlined">
+          <mat-card-header>
+            <div mat-card-avatar class="avatar" [style.background]="avatarColor(account.fullName)">
+              {{ initials(account.fullName) }}
+            </div>
+            <mat-card-title>{{ account.fullName }}</mat-card-title>
+            <mat-card-subtitle class="account-number">{{ account.accountNumber }}</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="balance">
+              {{ account.balance | currency:'USD':'symbol':'1.2-2' }}
+            </div>
+            <mat-chip-set>
+              <mat-chip [class]="'status-' + account.status.toLowerCase()">
+                {{ account.status === 'ACTIVE' ? 'Activa' : 'Inactiva' }}
+              </mat-chip>
+            </mat-chip-set>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+
+    <mat-paginator
+      class="paginator"
+      [length]="total()"
+      [pageSize]="limit"
+      [pageIndex]="page - 1"
+      [pageSizeOptions]="[5, 10, 25, 50]"
+      (page)="onPage($event)"
+      showFirstLastButtons>
+    </mat-paginator>
+  }
+</div>

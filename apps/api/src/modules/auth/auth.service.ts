@@ -146,11 +146,18 @@ export class AuthService {
     });
   }
 
-  public async logout(userId: string): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { jwtVersion: { increment: 1 } },
-    });
+  public async logout(token: string | null): Promise<void> {
+    if (!token) return;
+    try {
+      const payload = this.jwtService.decode(token) as JwtPayload | null;
+      if (!payload?.sub) return;
+      await this.prisma.user.update({
+        where: { id: payload.sub },
+        data: { jwtVersion: { increment: 1 } },
+      }).catch(() => null);
+    } catch {
+      // token inválido — el cliente igual limpiará la cookie
+    }
   }
 
   private async hashPassword(password: string): Promise<string> {

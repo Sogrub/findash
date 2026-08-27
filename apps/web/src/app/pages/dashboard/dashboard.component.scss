@@ -74,9 +74,20 @@
   line-height: 1;
 }
 
+.user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
 .user-name {
   font-size: 0.875rem;
   font-weight: 600;
+}
+
+.user-balance {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
 .dashboard-body {
