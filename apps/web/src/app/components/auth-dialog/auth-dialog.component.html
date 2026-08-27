@@ -1,0 +1,195 @@
+<!-- ── VISTA AUTH (login / registro) ─────────────────────────────────────── -->
+@if (view() === 'auth') {
+  <div class="dialog-logo">
+    <span class="logo-icon">◆</span>
+    <span>FinDash</span>
+  </div>
+
+  <mat-tab-group
+    [selectedIndex]="selectedTab"
+    (selectedIndexChange)="onTabChange($event)"
+    class="auth-tabs"
+  >
+    <!-- LOGIN -->
+    <mat-tab label="Iniciar sesión">
+      <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="auth-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Correo electrónico</mat-label>
+          <input matInput type="email" formControlName="email" placeholder="tu@email.com" />
+          @if (loginForm.get('email')?.hasError('required')) {
+            <mat-error>El correo es requerido</mat-error>
+          } @else if (loginForm.get('email')?.hasError('email')) {
+            <mat-error>Ingresa un correo válido</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Contraseña</mat-label>
+          <input matInput type="password" formControlName="password" placeholder="Mínimo 6 caracteres" />
+          @if (loginForm.get('password')?.hasError('required')) {
+            <mat-error>La contraseña es requerida</mat-error>
+          } @else if (loginForm.get('password')?.hasError('minlength')) {
+            <mat-error>Mínimo 6 caracteres</mat-error>
+          }
+        </mat-form-field>
+
+        @if (errorMessage()) {
+          <div class="error-banner">{{ errorMessage() }}</div>
+        }
+
+        <button mat-flat-button type="submit" class="submit-btn" [disabled]="isLoading()">
+          @if (isLoading()) { Iniciando sesión... } @else { Iniciar sesión }
+        </button>
+
+        <button type="button" mat-button class="forgot-link" (click)="openForgot()">
+          ¿Olvidaste tu contraseña?
+        </button>
+
+        <div class="form-divider"><span>o continúa con</span></div>
+
+        <a [href]="googleAuthUrl" class="btn-google">
+          <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Continuar con Google
+        </a>
+      </form>
+    </mat-tab>
+
+    <!-- REGISTRO -->
+    <mat-tab label="Registrarse">
+      <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="auth-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nombre completo</mat-label>
+          <input matInput type="text" formControlName="fullName" placeholder="John Doe" />
+          @if (registerForm.get('fullName')?.hasError('required')) {
+            <mat-error>El nombre es requerido</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Documento de identidad</mat-label>
+          <input matInput type="text" formControlName="document" placeholder="123456789" />
+          @if (registerForm.get('document')?.hasError('required')) {
+            <mat-error>El documento es requerido</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Correo electrónico</mat-label>
+          <input matInput type="email" formControlName="email" placeholder="tu@email.com" />
+          @if (registerForm.get('email')?.hasError('required')) {
+            <mat-error>El correo es requerido</mat-error>
+          } @else if (registerForm.get('email')?.hasError('email')) {
+            <mat-error>Ingresa un correo válido</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Contraseña</mat-label>
+          <input matInput type="password" formControlName="password" placeholder="Mínimo 6 caracteres" />
+          @if (registerForm.get('password')?.hasError('required')) {
+            <mat-error>La contraseña es requerida</mat-error>
+          } @else if (registerForm.get('password')?.hasError('minlength')) {
+            <mat-error>Mínimo 6 caracteres</mat-error>
+          }
+        </mat-form-field>
+
+        @if (errorMessage()) {
+          <div class="error-banner">{{ errorMessage() }}</div>
+        }
+
+        <button mat-flat-button type="submit" class="submit-btn" [disabled]="isLoading()">
+          @if (isLoading()) { Creando cuenta... } @else { Crear cuenta gratis }
+        </button>
+
+        <div class="form-divider"><span>o continúa con</span></div>
+
+        <a [href]="googleAuthUrl" class="btn-google">
+          <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Continuar con Google
+        </a>
+      </form>
+    </mat-tab>
+  </mat-tab-group>
+}
+
+<!-- ── VISTA RECUPERAR CONTRASEÑA ─────────────────────────────────────────── -->
+@if (view() === 'forgot') {
+  <div class="forgot-view">
+    <div class="forgot-header">
+      <button type="button" mat-button class="back-btn" (click)="backToAuth()">← Volver</button>
+      <p class="forgot-title">Recuperar contraseña</p>
+    </div>
+
+    @if (forgotStep() === 1) {
+      <form [formGroup]="forgotForm" (ngSubmit)="onForgotPassword()" class="auth-form">
+        <p class="forgot-hint">Ingresa tu correo para recibir un código de recuperación.</p>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Correo electrónico</mat-label>
+          <input matInput type="email" formControlName="email" placeholder="tu@email.com" />
+          @if (forgotForm.get('email')?.hasError('required')) {
+            <mat-error>El correo es requerido</mat-error>
+          } @else if (forgotForm.get('email')?.hasError('email')) {
+            <mat-error>Ingresa un correo válido</mat-error>
+          }
+        </mat-form-field>
+
+        @if (errorMessage()) {
+          <div class="error-banner">{{ errorMessage() }}</div>
+        }
+
+        <button mat-flat-button type="submit" class="submit-btn" [disabled]="isLoading()">
+          @if (isLoading()) { Verificando... } @else { Obtener código }
+        </button>
+      </form>
+    }
+
+    @if (forgotStep() === 2) {
+      <form [formGroup]="resetForm" (ngSubmit)="onResetPassword()" class="auth-form">
+        <div class="code-display">
+          <span class="code-label">Tu código de recuperación</span>
+          <span class="code-value">{{ recoveryCode() }}</span>
+          <span class="code-note">En producción este código llegaría por correo</span>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Código de 6 dígitos</mat-label>
+          <input matInput type="text" formControlName="code" placeholder="123456" maxlength="6" />
+          @if (resetForm.get('code')?.hasError('required')) {
+            <mat-error>El código es requerido</mat-error>
+          } @else if (resetForm.get('code')?.hasError('minlength')) {
+            <mat-error>El código tiene 6 dígitos</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nueva contraseña</mat-label>
+          <input matInput type="password" formControlName="newPassword" placeholder="Mínimo 6 caracteres" />
+          @if (resetForm.get('newPassword')?.hasError('required')) {
+            <mat-error>La contraseña es requerida</mat-error>
+          } @else if (resetForm.get('newPassword')?.hasError('minlength')) {
+            <mat-error>Mínimo 6 caracteres</mat-error>
+          }
+        </mat-form-field>
+
+        @if (errorMessage()) {
+          <div class="error-banner">{{ errorMessage() }}</div>
+        }
+
+        <button mat-flat-button type="submit" class="submit-btn" [disabled]="isLoading()">
+          @if (isLoading()) { Actualizando... } @else { Cambiar contraseña }
+        </button>
+      </form>
+    }
+  </div>
+}

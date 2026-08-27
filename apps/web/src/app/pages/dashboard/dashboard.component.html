@@ -1,0 +1,29 @@
+<mat-toolbar class="navbar">
+  <div class="nav-inner">
+    <div class="logo">
+      <span class="logo-icon">◆</span>
+      <span>FinDash</span>
+    </div>
+
+    <div class="nav-right">
+      @if (store.currentUser(); as user) {
+        <div class="user-chip">
+          <div class="avatar">
+            @if (user.avatarUrl && !avatarError()) {
+              <img [src]="user.avatarUrl" [alt]="user.fullName" class="avatar-img" (error)="onAvatarError()" />
+            } @else {
+              <span class="avatar-initials">{{ initials(user.fullName) }}</span>
+            }
+          </div>
+          <span class="user-name">{{ user.fullName }}</span>
+        </div>
+      }
+      <button mat-button (click)="logout()">Cerrar sesión</button>
+    </div>
+  </div>
+</mat-toolbar>
+
+<div class="dashboard-body">
+  <h1>Dashboard</h1>
+  <p class="coming-soon">Próximamente: cuentas, transacciones y KPIs.</p>
+</div>

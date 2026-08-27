@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES2021",
+    "esModuleInterop": true,
+    "strict": false,
+    "types": ["node"]
+  }
+}

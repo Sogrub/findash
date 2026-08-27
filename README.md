@@ -1,77 +1,76 @@
 # FinDash - Billetera Digital
 
-Monorepo con **NestJS** (API) + **Angular** (Web) + **PostgreSQL**, gestionado con **NX**.
+Monorepo con **NestJS** (API) + **Angular** (Web) + **PostgreSQL**, gestionado con **NX** y **pnpm**.
 
 ---
 
-## Setup del Monorepo
+## Requisitos
 
-### 1. Crear el workspace NX
-
-Desde la raíz del proyecto (`findash/`):
-
-```bash
-npx create-nx-workspace@latest . --preset=apps --nxCloud=skip --packageManager=pnpm
-```
-
-> Cuando pregunte `Create workspace in the current directory?`, responder **Yes**.
+- Node.js >= 18
+- pnpm >= 8
+- Docker
 
 ---
 
-## Base de Datos (PostgreSQL con Docker)
-
-### 2. Levantar la base de datos
-
-El proyecto usa Docker para correr PostgreSQL en el puerto `5433` (para no chocar con instancias locales existentes en `5432`).
+## Instalación
 
 ```bash
-pnpm db:up
-```
-
-### Credenciales de conexión
-
-| Campo    | Valor        |
-|----------|--------------|
-| Host     | `localhost`  |
-| Port     | `5433`       |
-| Database | `findash`    |
-| User     | `findash`    |
-| Password | `findash123` |
-
-### Otros comandos de base de datos
-
-```bash
-pnpm db:down    # Para el contenedor
-pnpm db:logs    # Sigue los logs en tiempo real
+pnpm install
 ```
 
 ---
 
-## ORM (Prisma v5)
+## Variables de entorno
 
-El schema y las migraciones viven en `libs/database/` para que puedan ser reutilizados por cualquier app del monorepo.
-
-### 3. Instalar Prisma en la librería de base de datos
+Copia los archivos de ejemplo y ajusta los valores:
 
 ```bash
-pnpm add prisma@^5 @prisma/client@^5 --filter @findash/database
-pnpm add prisma@^5 --save-dev -w
+cp .env.example .env
+cp apps/api/.env-template apps/api/.env
 ```
 
-### Variables de entorno
+| Archivo | Propósito |
+|---|---|
+| `apps/api/.env` | Variables del API (puerto, JWT, DB) |
+| `libs/database/.env` | `DATABASE_URL` para migraciones de Prisma |
 
-Crea un `.env` en la raíz del proyecto:
+---
 
-```env
-DATABASE_URL="postgresql://findash:findash123@localhost:5433/findash"
-```
-
-### Comandos de Prisma
+## Base de datos
 
 ```bash
-pnpm db:migrate     # Crea y aplica una nueva migración
-pnpm db:generate    # Genera el cliente TypeScript a partir del schema
-pnpm db:migrate:prod  # Aplica migraciones en producción (sin prompt)
+pnpm db:up            # Levanta PostgreSQL en Docker (puerto 5433)
+pnpm db:migrate       # Crea y aplica migraciones
+pnpm db:generate      # Genera el cliente Prisma
+pnpm db:down          # Para el contenedor
+pnpm db:logs          # Logs en tiempo real
 ```
 
-> Los modelos se definen en `libs/database/prisma/schema.prisma`.
+---
+
+## API
+
+```bash
+pnpm api:dev          # Modo desarrollo con hot reload
+pnpm api:build        # Compila para producción
+pnpm api:start        # Corre el build de producción
+pnpm api:test         # Tests unitarios
+pnpm api:test:cov     # Tests con cobertura
+```
+
+Swagger disponible en: `http://localhost:3000/docs`
+
+---
+
+## Estructura
+
+```
+apps/
+  api/          # NestJS — REST API
+  web/          # Angular — Frontend
+libs/
+  database/     # Prisma schema, cliente y migraciones
+  shared/       # DTOs e interfaces compartidas
+```
+
+> Ver `docs/development-guide.md` para el registro de decisiones y comandos usados durante la construcción.

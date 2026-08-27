@@ -1,0 +1,40 @@
+<mat-toolbar class="navbar">
+  <div class="nav-inner">
+    <div class="logo">
+      <span class="logo-icon">◆</span>
+      <span>FinDash</span>
+    </div>
+    <div class="nav-actions">
+      <button mat-button (click)="openAuth('login')">Iniciar sesión</button>
+      <button mat-flat-button (click)="openAuth('register')">Abrir cuenta</button>
+    </div>
+  </div>
+</mat-toolbar>
+
+<main class="hero">
+  <div class="hero-glow glow-1"></div>
+  <div class="hero-glow glow-2"></div>
+
+  <div class="hero-inner">
+    <span class="hero-badge">🚀 Billetera digital del futuro</span>
+
+    <h1 class="hero-title">
+      Tu dinero,<br />
+      <span class="gradient-text">sin fronteras.</span>
+    </h1>
+
+    <p class="hero-sub">
+      Transfiere, administra y haz crecer tu dinero con la billetera digital más inteligente.
+      Sin comisiones ocultas, sin límites.
+    </p>
+
+    <div class="hero-cta">
+      <button mat-flat-button class="cta-primary" (click)="openAuth('register')">
+        Abrir cuenta gratis &nbsp;→
+      </button>
+      <button mat-button class="cta-ghost" (click)="openAuth('login')">
+        Ya tengo cuenta
+      </button>
+    </div>
+  </div>
+</main>

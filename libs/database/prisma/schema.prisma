@@ -24,12 +24,16 @@ model User {
   document     String   @unique
   fullName     String   @map("full_name")
   email        String   @unique
-  passwordHash String   @map("password_hash")
+  passwordHash String?  @map("password_hash")
+  googleId     String?  @unique @map("google_id")
   avatarUrl    String?  @map("avatar_url")
-  status       UserStatus @default(ACTIVE)
-  roleId       String   @map("role_id")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  status              UserStatus @default(ACTIVE)
+  roleId              String     @map("role_id")
+  passwordResetToken  String?    @map("password_reset_token")
+  passwordResetExpiry DateTime?  @map("password_reset_expiry")
+  jwtVersion          Int        @default(0) @map("jwt_version")
+  createdAt           DateTime   @default(now()) @map("created_at")
+  updatedAt           DateTime   @updatedAt @map("updated_at")
 
   role       Role        @relation(fields: [roleId], references: [id])
   account    Account?

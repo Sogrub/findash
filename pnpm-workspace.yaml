@@ -4,12 +4,14 @@ packages:
 
 autoInstallPeers: true
 allowBuilds:
-  '@prisma/client': set this to true or false
-  '@prisma/engines': set this to true or false
+  '@prisma/client': true
+  '@prisma/engines': true
+  '@scarf/scarf': false
+  '@swc/core': true
   esbuild: true
   msgpackr-extract: false
   nx: true
-  prisma: set this to true or false
+  prisma: true
   unrs-resolver: false
   workerd: false
 minimumReleaseAgeExclude:
