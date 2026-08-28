@@ -1,0 +1,11 @@
+node_modules
+.git
+**/.env
+**/.env.prod
+*.log
+apps/web/dist
+apps/api/dist
+apps/api/coverage
+apps/web/coverage
+.github
+docs
