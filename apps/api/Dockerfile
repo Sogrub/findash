@@ -22,7 +22,7 @@ RUN pnpm --filter @findash/database db:generate
 RUN pnpm --filter @findash/api build
 
 # Create standalone production deployment (resolves workspace deps, prod-only)
-RUN pnpm --filter @findash/api --prod deploy /prod
+RUN pnpm --filter @findash/api --prod deploy --legacy /prod
 
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
