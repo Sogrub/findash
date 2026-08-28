@@ -49,4 +49,20 @@ describe("AntiFraudService", () => {
       service.check(new Prisma.Decimal("0.01"), "acc-4"),
     ).resolves.toBeUndefined();
   });
+
+  it("re-throws non-timeout errors from the external check", async () => {
+    const service = new AntiFraudService();
+    const networkError = new Error("network failure");
+    jest.spyOn(service as any, "simulateExternalCheck").mockRejectedValue(networkError);
+
+    await expect(service.check(new Prisma.Decimal("50"), "acc-5")).rejects.toThrow("network failure");
+    await expect(service.check(new Prisma.Decimal("50"), "acc-5")).rejects.not.toThrow(ServiceUnavailableException);
+  });
+
+  it("simulateExternalCheck resolves after internal delay", async () => {
+    const service = new AntiFraudService();
+    const promise = (service as any).simulateExternalCheck();
+    jest.advanceTimersByTime(1_501);
+    await expect(promise).resolves.toBeUndefined();
+  });
 });

@@ -137,5 +137,62 @@ describe("AccountsService", () => {
 
       expect(result.data[0].accountNumber).toBe("AB1234567890");
     });
+
+    it("applies search filter on user document", async () => {
+      const service = await buildService();
+      await service.listAccounts({
+        page: 1,
+        limit: 10,
+        sortBy: AccountSortField.CREATED_AT,
+        sortOrder: SortOrder.DESC,
+        search: "12345",
+      });
+
+      expect(mockPrisma.account.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            user: { document: { contains: "12345", mode: "insensitive" } },
+          }),
+        }),
+      );
+    });
+
+    it("applies status filter", async () => {
+      const service = await buildService();
+      await service.listAccounts({
+        page: 1,
+        limit: 10,
+        sortBy: AccountSortField.CREATED_AT,
+        sortOrder: SortOrder.DESC,
+        status: "INACTIVE" as any,
+      });
+
+      expect(mockPrisma.account.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: "INACTIVE" }),
+        }),
+      );
+    });
+
+    it("applies both search and status filters together", async () => {
+      const service = await buildService();
+      await service.listAccounts({
+        page: 1,
+        limit: 10,
+        sortBy: AccountSortField.CREATED_AT,
+        sortOrder: SortOrder.DESC,
+        search: "99999",
+        status: "ACTIVE" as any,
+      });
+
+      expect(mockPrisma.account.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            user: { document: { contains: "99999", mode: "insensitive" } },
+            status: "ACTIVE",
+          }),
+        }),
+      );
+    });
   });
 });

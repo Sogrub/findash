@@ -312,4 +312,52 @@ describe("TransactionsService", () => {
       expect(result.data[0].direction).toBe("INCOMING");
     });
   });
+
+  // ── getAccountTransactions() ────────────────────────────────────────────────
+
+  describe("getAccountTransactions()", () => {
+    it("throws NotFoundException when account does not exist", async () => {
+      mockPrisma.account.findUnique.mockResolvedValue(null);
+
+      const service = await buildService();
+      await expect(service.getAccountTransactions("ghost-acc", 1, 10)).rejects.toThrow(
+        "Cuenta no encontrada",
+      );
+    });
+
+    it("returns paginated transactions for the given account", async () => {
+      mockPrisma.account.findUnique.mockResolvedValue({ id: "src-id" });
+      mockPrisma.$transaction.mockResolvedValue([[COMPLETED_TX], 1]);
+
+      const service = await buildService();
+      const result = await service.getAccountTransactions("src-id", 1, 10);
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].direction).toBe("OUTGOING");
+      expect(result.meta.total).toBe(1);
+    });
+
+    it("marks INCOMING direction when account is the destination", async () => {
+      mockPrisma.account.findUnique.mockResolvedValue({ id: "dst-id" });
+      mockPrisma.$transaction.mockResolvedValue([[COMPLETED_TX], 1]);
+
+      const service = await buildService();
+      const result = await service.getAccountTransactions("dst-id", 1, 10);
+
+      expect(result.data[0].direction).toBe("INCOMING");
+    });
+
+    it("returns correct pagination meta", async () => {
+      mockPrisma.account.findUnique.mockResolvedValue({ id: "src-id" });
+      mockPrisma.$transaction.mockResolvedValue([[COMPLETED_TX], 25]);
+
+      const service = await buildService();
+      const result = await service.getAccountTransactions("src-id", 2, 10);
+
+      expect(result.meta.page).toBe(2);
+      expect(result.meta.limit).toBe(10);
+      expect(result.meta.total).toBe(25);
+      expect(result.meta.totalPages).toBe(3);
+    });
+  });
 });

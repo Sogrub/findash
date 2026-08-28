@@ -55,19 +55,21 @@ pnpm db:logs          # Logs en tiempo real
 
 ### Usuarios de prueba (después del seed)
 
-| Rol    | Email                      | Contraseña       | Saldo       |
-|--------|----------------------------|------------------|-------------|
-| ADMIN  | diegoaburgos1@gmail.com    | Diego123456!     | $50,000.00  |
-| CLIENT | valentina.r@example.com    | Cliente123456!   | $2,500.00   |
-| CLIENT | carlos.m@example.com       | Cliente123456!   | $15,800.75  |
-| CLIENT | sofia.g@example.com        | Cliente123456!   | $450.00     |
-| CLIENT | isabella.h@example.com     | Cliente123456!   | $8,200.50   |
-| CLIENT | alejandro.v@example.com    | Cliente123456!   | $32,000.00  |
-| CLIENT | mariana.l@example.com      | Cliente123456!   | $980.20     |
-| CLIENT | jp.silva@example.com       | Cliente123456!   | $0.00       |
-| CLIENT | mf.castro@example.com      | Cliente123456!   | $0.00       |
-| CLIENT | luis.p@example.com         | Cliente123456!   | $0.00       |
-| CLIENT | camila.o@example.com       | Cliente123456!   | $0.00       |
+| Rol    | Tipo cuenta | Email                       | Contraseña      | Saldo       |
+|--------|-------------|-----------------------------|-----------------|-------------|
+| ADMIN  | CORPORATE   | diegoaburgos1@gmail.com     | Diego123456!    | $50,000.00  |
+| CLIENT | BASIC       | carlos.m@example.com        | Cliente123456!  | $12,800.00  |
+| CLIENT | BASIC       | sofia.g@example.com         | Cliente123456!  | $680.00     |
+| CLIENT | BASIC       | mariana.l@example.com       | Cliente123456!  | $1,150.00   |
+| CLIENT | BASIC       | jp.silva@example.com        | Cliente123456!  | $250.00     |
+| CLIENT | BASIC       | luis.p@example.com          | Cliente123456!  | $0.00       |
+| CLIENT | PREMIUM     | valentina.r@example.com     | Cliente123456!  | $3,500.00   |
+| CLIENT | PREMIUM     | isabella.h@example.com      | Cliente123456!  | $9,800.00   |
+| CLIENT | PREMIUM     | mf.castro@example.com       | Cliente123456!  | $0.00       |
+| CLIENT | CORPORATE   | alejandro.v@example.com     | Cliente123456!  | $33,200.00  |
+| CLIENT | CORPORATE   | camila.o@example.com        | Cliente123456!  | $0.00       |
+
+Comisiones por tipo de cuenta: BASIC → 2% del monto | PREMIUM → $0 | CORPORATE → $5 fijo.
 
 > El seed borra y recrea todos los datos en cada ejecución.
 
@@ -122,4 +124,43 @@ libs/
   database/         # Prisma schema, cliente y migraciones
 ```
 
-> Ver `docs/development-guide.md` para las decisiones de arquitectura y los endpoints disponibles.
+---
+
+## Despliegue en producción
+
+**URL activa:** http://136.115.30.249/
+
+### CI/CD automático
+
+Cada push a `main` dispara el pipeline en GitHub Actions (`.github/workflows/deploy.yml`) que:
+
+1. Construye las imágenes Docker de API y Web
+2. Las publica en GitHub Container Registry (`ghcr.io/sogrub/findash`)
+3. Se conecta al servidor GCP vía SSH y reinicia los contenedores
+
+Los secrets necesarios en el repositorio (`Settings → Secrets`):
+
+| Secret | Descripción |
+|--------|-------------|
+| `VM_HOST` | IP del servidor |
+| `VM_USER` | Usuario SSH |
+| `VM_SSH_KEY` | Clave privada SSH |
+| `GHCR_TOKEN` | Token para autenticarse en GHCR |
+
+### Despliegue manual en el servidor
+
+```bash
+# 1. Crear el archivo de variables de producción
+cp .env.prod.example .env.prod
+# Editar .env.prod con los valores reales
+
+# 2. Levantar los servicios (Postgres + API + nginx/Web)
+API_IMAGE=ghcr.io/sogrub/findash/api:latest \
+WEB_IMAGE=ghcr.io/sogrub/findash/web:latest \
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+
+# 3. Aplicar migraciones en producción
+pnpm db:migrate:prod
+```
+
+Las variables requeridas en `.env.prod` están documentadas en `.env.prod.example`.
