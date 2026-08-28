@@ -15,6 +15,14 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { AuthStore } from '../../store/auth.store';
 import { TransfersStore } from '../../store/transfers.store';
 
+function generateUUID(): string {
+  if (typeof crypto?.randomUUID === 'function') return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
 @Component({
   selector: 'app-transfers',
   imports: [
@@ -40,7 +48,7 @@ export class TransfersComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   protected readonly avatarError = signal(false);
-  protected idempotencyKey = crypto.randomUUID();
+  protected idempotencyKey = generateUUID();
 
   protected readonly form: FormGroup = this.fb.group({
     toAccountNumber: ['', [Validators.required, Validators.minLength(3)]],
@@ -104,7 +112,7 @@ export class TransfersComponent implements OnInit {
       { toAccountNumber: toAccountNumber.trim(), amount, description: description || undefined },
       () => {
         this.form.reset();
-        this.idempotencyKey = crypto.randomUUID();
+        this.idempotencyKey = generateUUID();
         this.txPage = 1;
         this.transfersStore.loadHistory(1, this.txLimit);
       },
