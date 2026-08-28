@@ -78,7 +78,7 @@ jobs:
             cd ~/findash
             API_IMAGE=${{ env.API_IMAGE }}:latest \
             WEB_IMAGE=${{ env.WEB_IMAGE }}:latest \
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --remove-orphans
 
             # Remove dangling images to free disk space
             docker image prune -f
