@@ -63,24 +63,43 @@
   } @else {
     <div class="accounts-grid">
       @for (account of accounts(); track account.accountNumber) {
-        <mat-card class="account-card" appearance="outlined">
+        <mat-card
+          class="account-card"
+          appearance="outlined"
+          (click)="openSidebar(account)"
+          [class.active]="selectedAccount()?.id === account.id">
           <mat-card-header>
             <div mat-card-avatar class="avatar" [style.background]="avatarColor(account.fullName)">
               {{ initials(account.fullName) }}
             </div>
             <mat-card-title>{{ account.fullName }}</mat-card-title>
-            <mat-card-subtitle class="account-number">{{ account.accountNumber }}</mat-card-subtitle>
+            <mat-card-subtitle class="account-number-row">
+              <span class="account-number mono">
+                {{ isRevealed(account.accountNumber) ? account.accountNumber : mask(account.accountNumber) }}
+              </span>
+              <div class="account-actions">
+                <button class="icon-btn" [title]="isRevealed(account.accountNumber) ? 'Ocultar' : 'Revelar'"
+                  (click)="toggleReveal(account.accountNumber, $event)">
+                  {{ isRevealed(account.accountNumber) ? '○' : '●' }}
+                </button>
+                <button class="icon-btn copy-btn" [class.copied]="copied() === account.accountNumber"
+                  title="Copiar" (click)="copyAccount(account.accountNumber, $event)">
+                  {{ copied() === account.accountNumber ? '✓' : '⎘' }}
+                </button>
+              </div>
+            </mat-card-subtitle>
           </mat-card-header>
 
           <mat-card-content>
             <div class="balance">
               {{ account.balance | currency:'USD':'symbol':'1.2-2' }}
             </div>
-            <mat-chip-set>
-              <mat-chip [class]="'status-' + account.status.toLowerCase()">
+            <div class="card-tags">
+              <span class="tag" [class]="'tag type-' + account.type.toLowerCase()">{{ account.type }}</span>
+              <span class="tag" [class]="'tag status-' + account.status.toLowerCase()">
                 {{ account.status === 'ACTIVE' ? 'Activa' : 'Inactiva' }}
-              </mat-chip>
-            </mat-chip-set>
+              </span>
+            </div>
           </mat-card-content>
         </mat-card>
       }
@@ -97,3 +116,102 @@
     </mat-paginator>
   }
 </div>
+
+<!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
+@if (selectedAccount(); as account) {
+  <div class="sidebar-overlay" (click)="closeSidebar()"></div>
+
+  <aside class="sidebar-panel">
+    <button class="sidebar-close" (click)="closeSidebar()" title="Cerrar">✕</button>
+
+    <!-- Account header -->
+    <div class="sidebar-account">
+      <div class="sidebar-avatar" [style.background]="avatarColor(account.fullName)">
+        {{ initials(account.fullName) }}
+      </div>
+      <div class="sidebar-account-text">
+        <div class="sidebar-name">{{ account.fullName }}</div>
+        <div class="sidebar-number mono">{{ account.accountNumber }}</div>
+      </div>
+    </div>
+
+    <div class="sidebar-balance-row">
+      <span class="sidebar-balance">{{ account.balance | currency:'USD':'symbol':'1.2-2' }}</span>
+      <div class="sidebar-chips">
+        <span class="type-badge type-{{ account.type.toLowerCase() }}">{{ account.type }}</span>
+        <span class="status-badge status-{{ account.status.toLowerCase() }}">
+          {{ account.status === 'ACTIVE' ? 'Activa' : 'Inactiva' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="sidebar-section-title">
+      Transacciones
+      @if (sidebarTotal() > 0) {
+        <span class="sidebar-count">{{ sidebarTotal() }}</span>
+      }
+    </div>
+
+    @if (sidebarLoading()) {
+      <div class="sidebar-tx-list">
+        @for (i of sidebarSkeletons; track i) {
+          <div class="stx-item skeleton">
+            <div class="sk-icon"></div>
+            <div class="sk-body">
+              <div class="sk-line sk-long"></div>
+              <div class="sk-line sk-short"></div>
+            </div>
+            <div class="sk-amount"></div>
+          </div>
+        }
+      </div>
+    } @else if (sidebarTxs().length === 0) {
+      <div class="sidebar-empty">
+        <span class="empty-icon">📭</span>
+        <p>Sin transacciones registradas</p>
+      </div>
+    } @else {
+      <div class="sidebar-tx-list">
+        @for (tx of sidebarTxs(); track tx.id) {
+          <div class="stx-item">
+            <div class="stx-icon" [class]="tx.direction.toLowerCase()">
+              {{ tx.direction === 'OUTGOING' ? '↑' : '↓' }}
+            </div>
+            <div class="stx-body">
+              <div class="stx-counterpart">
+                {{ tx.direction === 'OUTGOING' ? tx.toName : tx.fromName }}
+              </div>
+              <div class="stx-account mono">
+                {{ tx.direction === 'OUTGOING' ? tx.toAccount : tx.fromAccount }}
+              </div>
+              <div class="stx-date">{{ tx.createdAt | date:'dd MMM yyyy · HH:mm' }}</div>
+            </div>
+            <div class="stx-right">
+              @if (tx.direction === 'OUTGOING' && tx.commission > 0) {
+                <span class="stx-commission">+{{ tx.commission | currency:'USD':'symbol':'1.2-2' }} com.</span>
+              }
+              <span class="stx-amount" [class]="tx.direction.toLowerCase()">
+                {{ tx.direction === 'OUTGOING' ? '-' : '+' }}{{ tx.amount | currency:'USD':'symbol':'1.2-2' }}
+              </span>
+              <mat-chip-set>
+                <mat-chip [class]="'status-' + tx.status.toLowerCase()">
+                  {{ tx.status === 'COMPLETED' ? 'OK' : tx.status }}
+                </mat-chip>
+              </mat-chip-set>
+            </div>
+          </div>
+        }
+      </div>
+
+      <mat-paginator
+        class="sidebar-paginator"
+        [length]="sidebarTotal()"
+        [pageSize]="sidebarLimit"
+        [pageIndex]="sidebarPage - 1"
+        [pageSizeOptions]="[10, 25]"
+        (page)="onSidebarPage($event)"
+        showFirstLastButtons>
+      </mat-paginator>
+    }
+  </aside>
+}

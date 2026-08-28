@@ -49,7 +49,15 @@ export class AuthService {
       data: { userId: user.id, ipAddress, success: true },
     });
 
-    return { accessToken: this.signToken(user.id, user.email, user.role.name, user.jwtVersion, user.fullName) };
+    return {
+      accessToken: this.signToken(
+        user.id,
+        user.email,
+        user.role.name,
+        user.jwtVersion,
+        user.fullName,
+      ),
+    };
   }
 
   public async login(dto: LoginDto, ipAddress?: string): Promise<{ accessToken: string }> {
@@ -69,7 +77,15 @@ export class AuthService {
 
     if (!isValid) throw new UnauthorizedException("Invalid credentials");
 
-    return { accessToken: this.signToken(user.id, user.email, user.role.name, user.jwtVersion, user.fullName) };
+    return {
+      accessToken: this.signToken(
+        user.id,
+        user.email,
+        user.role.name,
+        user.jwtVersion,
+        user.fullName,
+      ),
+    };
   }
 
   public async googleLogin(profile: GoogleProfile): Promise<{ accessToken: string }> {
@@ -100,7 +116,16 @@ export class AuthService {
       });
     }
 
-    return { accessToken: this.signToken(user.id, user.email, user.role.name, user.jwtVersion, user.fullName, user.avatarUrl ?? undefined) };
+    return {
+      accessToken: this.signToken(
+        user.id,
+        user.email,
+        user.role.name,
+        user.jwtVersion,
+        user.fullName,
+        user.avatarUrl ?? undefined,
+      ),
+    };
   }
 
   public async forgotPassword(dto: ForgotPasswordDto): Promise<{ code: string }> {
@@ -109,7 +134,8 @@ export class AuthService {
     });
 
     if (!user) throw new NotFoundException("Usuario no encontrado");
-    if (!user.passwordHash) throw new BadRequestException("Esta cuenta usa autenticación de Google");
+    if (!user.passwordHash)
+      throw new BadRequestException("Esta cuenta usa autenticación de Google");
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const hashedCode = await this.hashPassword(code);
@@ -149,12 +175,14 @@ export class AuthService {
   public async logout(token: string | null): Promise<void> {
     if (!token) return;
     try {
-      const payload = this.jwtService.decode(token) as JwtPayload | null;
+      const payload = this.jwtService.decode(token);
       if (!payload?.sub) return;
-      await this.prisma.user.update({
-        where: { id: payload.sub },
-        data: { jwtVersion: { increment: 1 } },
-      }).catch(() => null);
+      await this.prisma.user
+        .update({
+          where: { id: payload.sub },
+          data: { jwtVersion: { increment: 1 } },
+        })
+        .catch(() => null);
     } catch {
       // token inválido — el cliente igual limpiará la cookie
     }

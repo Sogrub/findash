@@ -1,0 +1,197 @@
+<mat-toolbar class="navbar">
+  <div class="nav-inner">
+    <div class="logo">
+      <span class="logo-icon">◆</span>
+      <span>FinDash</span>
+    </div>
+    <div class="nav-right">
+      @if (store.currentUser(); as user) {
+        <div class="user-chip">
+          <div class="avatar">
+            @if (user.avatarUrl && !avatarError()) {
+              <img [src]="user.avatarUrl" [alt]="user.fullName" class="avatar-img" (error)="onAvatarError()" />
+            } @else {
+              <span class="avatar-initials">{{ initials(user.fullName) }}</span>
+            }
+          </div>
+          <div class="user-info">
+            <span class="user-name">{{ user.fullName }}</span>
+            @if (balance() !== null) {
+              <span class="user-balance">{{ balance() | currency:'USD':'symbol':'1.2-2' }}</span>
+            }
+          </div>
+        </div>
+      }
+      <a mat-button routerLink="/dashboard">Dashboard</a>
+      <button mat-button (click)="logout()">Cerrar sesión</button>
+    </div>
+  </div>
+</mat-toolbar>
+
+<div class="page-body">
+  <div class="page-header">
+    <div>
+      <h1>Transferencias</h1>
+      <p class="subtitle">Envía dinero y consulta tu historial de movimientos.</p>
+    </div>
+  </div>
+
+  <div class="transfers-layout">
+
+    <!-- ── Formulario ──────────────────────────────────────────────────────── -->
+    <section class="form-panel">
+      <div class="panel-title">Nueva transferencia</div>
+
+      @if (formSuccess()) {
+        @if (lastResult(); as tx) {
+          <div class="success-banner">
+            <div class="success-banner-header">
+              <span class="success-icon">✓</span>
+              <span>Transferencia realizada correctamente.</span>
+            </div>
+            <div class="success-detail">
+              <span>Enviado: <strong>{{ tx.amount | currency:'USD':'symbol':'1.2-2' }}</strong></span>
+              @if (tx.commission > 0) {
+                <span>Comisión: <strong>{{ tx.commission | currency:'USD':'symbol':'1.2-2' }}</strong></span>
+                <span>Total debitado: <strong>{{ tx.totalDeducted | currency:'USD':'symbol':'1.2-2' }}</strong></span>
+              }
+            </div>
+          </div>
+        }
+      }
+
+      @if (formError()) {
+        <div class="error-banner">{{ formError() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" (focusin)="onFormFocus()">
+        <mat-form-field class="full-width" appearance="outline">
+          <mat-label>Número de cuenta destino</mat-label>
+          <input matInput formControlName="toAccountNumber" placeholder="Ej. AC1234567890" autocomplete="off" />
+          @if (form.get('toAccountNumber')?.hasError('required') && form.get('toAccountNumber')?.touched) {
+            <mat-error>El número de cuenta es obligatorio</mat-error>
+          }
+          @if (form.get('toAccountNumber')?.hasError('minlength') && form.get('toAccountNumber')?.touched) {
+            <mat-error>Ingresa un número de cuenta válido</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field class="full-width" appearance="outline">
+          <mat-label>Monto</mat-label>
+          <span matTextPrefix>$&nbsp;</span>
+          <input matInput type="number" formControlName="amount" placeholder="0.00" min="0.01" step="0.01" />
+          @if (form.get('amount')?.hasError('required') && form.get('amount')?.touched) {
+            <mat-error>El monto es obligatorio</mat-error>
+          }
+          @if (form.get('amount')?.hasError('min') && form.get('amount')?.touched) {
+            <mat-error>El monto mínimo es $0.01</mat-error>
+          }
+          @if (form.get('amount')?.hasError('max') && form.get('amount')?.touched) {
+            <mat-error>El monto máximo es $10,000,000</mat-error>
+          }
+        </mat-form-field>
+
+        @if (commissionInfo(); as ci) {
+          <div class="commission-hint" [class]="'commission-hint hint-' + ci.kind">
+            @if (ci.kind === 'premium') {
+              <span class="hint-icon">✓</span>
+              <span>Sin comisión · cuenta <strong>PREMIUM</strong></span>
+            } @else if (ci.amount > 0) {
+              <span class="hint-icon">ℹ</span>
+              <span>
+                Comisión{{ ci.kind === 'basic' ? ' (2%)' : ' fija' }}:
+                <strong>{{ ci.commission | currency:'USD':'symbol':'1.2-2' }}</strong>
+                &nbsp;·&nbsp;
+                Total a debitar: <strong>{{ ci.total | currency:'USD':'symbol':'1.2-2' }}</strong>
+              </span>
+            } @else if (ci.kind === 'basic') {
+              <span class="hint-icon">ℹ</span>
+              <span>Se cobrará el <strong>2%</strong> del monto como comisión</span>
+            } @else {
+              <span class="hint-icon">ℹ</span>
+              <span>Comisión fija de <strong>$5.00</strong> por transferencia</span>
+            }
+          </div>
+        }
+
+        <mat-form-field class="full-width" appearance="outline">
+          <mat-label>Descripción (opcional)</mat-label>
+          <input matInput formControlName="description" placeholder="Ej. Pago de arriendo" />
+        </mat-form-field>
+
+        <button mat-flat-button type="submit" class="submit-btn" [disabled]="formLoading()">
+          @if (formLoading()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            Transferir
+          }
+        </button>
+      </form>
+    </section>
+
+    <!-- ── Historial ───────────────────────────────────────────────────────── -->
+    <section class="history-panel">
+      <div class="panel-title">Mis transferencias</div>
+
+      @if (historyLoading()) {
+        <div class="tx-list">
+          @for (i of skeletonItems; track i) {
+            <div class="tx-item skeleton">
+              <div class="sk-icon"></div>
+              <div class="sk-body">
+                <div class="sk-line sk-short"></div>
+                <div class="sk-line sk-long"></div>
+              </div>
+              <div class="sk-amount"></div>
+            </div>
+          }
+        </div>
+      } @else if (transactions().length === 0) {
+        <div class="empty-state">
+          <span class="empty-icon">↕</span>
+          <p>Aún no tienes transferencias.</p>
+        </div>
+      } @else {
+        <div class="tx-list">
+          @for (tx of transactions(); track tx.id) {
+            <div class="tx-item">
+              <div class="tx-icon" [class.outgoing]="tx.direction === 'OUTGOING'" [class.incoming]="tx.direction === 'INCOMING'">
+                {{ tx.direction === 'OUTGOING' ? '↑' : '↓' }}
+              </div>
+              <div class="tx-body">
+                <span class="tx-counterpart">
+                  {{ tx.direction === 'OUTGOING' ? tx.toName : tx.fromName }}
+                </span>
+                <span class="tx-account">
+                  {{ tx.direction === 'OUTGOING' ? 'Para' : 'De' }}:
+                  <span class="mono">{{ tx.direction === 'OUTGOING' ? tx.toAccount : tx.fromAccount }}</span>
+                </span>
+                <span class="tx-date">{{ tx.createdAt | date:'dd MMM yyyy, HH:mm' }}</span>
+              </div>
+              <div class="tx-right">
+                <span class="tx-amount" [class.outgoing]="tx.direction === 'OUTGOING'" [class.incoming]="tx.direction === 'INCOMING'">
+                  {{ tx.direction === 'OUTGOING' ? '-' : '+' }}{{ tx.amount | currency:'USD':'symbol':'1.2-2' }}
+                </span>
+                @if (tx.direction === 'OUTGOING' && tx.commission > 0) {
+                  <span class="tx-commission">+ {{ tx.commission | currency:'USD':'symbol':'1.2-2' }} comisión</span>
+                }
+                <mat-chip [class]="'status-' + tx.status.toLowerCase()">{{ tx.status }}</mat-chip>
+              </div>
+            </div>
+          }
+        </div>
+
+        @if (totalTx() > txLimit) {
+          <mat-paginator
+            [length]="totalTx()"
+            [pageSize]="txLimit"
+            [pageIndex]="txPage - 1"
+            [hidePageSize]="true"
+            (page)="onPage($event)"
+          />
+        }
+      }
+    </section>
+
+  </div>
+</div>

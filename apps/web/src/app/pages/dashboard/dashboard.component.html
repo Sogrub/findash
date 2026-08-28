@@ -23,6 +23,9 @@
           </div>
         </div>
       }
+      @if (store.currentUser()?.role === 'CLIENT') {
+        <a mat-button routerLink="/transfers">Transferencias</a>
+      }
       @if (store.currentUser()?.role === 'ADMIN') {
         <a mat-button routerLink="/admin/accounts">Cuentas</a>
       }

@@ -72,12 +72,12 @@ describe("AccountsService", () => {
       mockPrisma.$transaction.mockResolvedValue([rows, 2]);
     });
 
-    it("returns paginated list with masked account numbers", async () => {
+    it("returns paginated list with full account numbers", async () => {
       const service = await buildService();
       const result = await service.listAccounts({ page: 1, limit: 20, sortBy: AccountSortField.CREATED_AT, sortOrder: SortOrder.DESC });
 
       expect(result.data).toHaveLength(2);
-      expect(result.data[0].accountNumber).toBe("FD***********");
+      expect(result.data[0].accountNumber).toBe("FD17000012345");
       expect(result.data[0].fullName).toBe("Diego Burgos");
       expect(result.data[0].balance).toBe(1000);
     });
@@ -126,7 +126,7 @@ describe("AccountsService", () => {
       );
     });
 
-    it("masks account number keeping only first 2 chars", async () => {
+    it("returns full account number without masking", async () => {
       mockPrisma.$transaction.mockResolvedValue([
         [{ accountNumber: "AB1234567890", balance: 0, status: "ACTIVE", user: { fullName: "Test" } }],
         1,
@@ -135,7 +135,7 @@ describe("AccountsService", () => {
       const service = await buildService();
       const result = await service.listAccounts({ page: 1, limit: 20, sortBy: AccountSortField.CREATED_AT, sortOrder: SortOrder.DESC });
 
-      expect(result.data[0].accountNumber).toBe("AB**********");
+      expect(result.data[0].accountNumber).toBe("AB1234567890");
     });
   });
 });

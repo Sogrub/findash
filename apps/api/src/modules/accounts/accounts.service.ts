@@ -37,9 +37,11 @@ export class AccountsService {
         take: limit,
         orderBy,
         select: {
+          id: true,
           accountNumber: true,
           balance: true,
           status: true,
+          type: true,
           user: { select: { fullName: true } },
         },
       }),
@@ -48,9 +50,11 @@ export class AccountsService {
 
     return {
       data: accounts.map((a) => ({
-        accountNumber: this.maskAccountNumber(a.accountNumber),
+        id: a.id,
+        accountNumber: a.accountNumber,
         fullName: a.user.fullName,
         balance: Number(a.balance),
+        type: a.type,
         status: a.status,
       })),
       meta: {
@@ -62,8 +66,4 @@ export class AccountsService {
     };
   }
 
-  private maskAccountNumber(accountNumber: string): string {
-    if (accountNumber.length <= 2) return accountNumber;
-    return accountNumber.slice(0, 2) + "*".repeat(accountNumber.length - 2);
-  }
 }

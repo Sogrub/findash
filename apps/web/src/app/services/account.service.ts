@@ -13,9 +13,11 @@ export interface AccountInfo {
 }
 
 export interface AccountListItem {
+  id: string;
   accountNumber: string;
   fullName: string;
   balance: number;
+  type: string;
   status: string;
 }
 

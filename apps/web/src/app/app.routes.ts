@@ -16,6 +16,12 @@ export const routes: Routes = [
       import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
   },
   {
+    path: 'transfers',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/transfers/transfers.component').then(m => m.TransfersComponent),
+  },
+  {
     path: 'admin/accounts',
     canActivate: [authGuard, adminGuard],
     loadComponent: () =>
