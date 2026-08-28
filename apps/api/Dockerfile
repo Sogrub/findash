@@ -2,25 +2,20 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
-RUN apk add --no-cache openssl
-RUN corepack enable && corepack prepare pnpm@11.5.0 --activate
+RUN apk add --no-cache openssl && \
+    npm install -g @nestjs/cli@11 && \
+    corepack enable && corepack prepare pnpm@11.5.0 --activate
 
-# Copy workspace manifests first (Docker layer cache: re-install only when these change)
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpm.json ./
 COPY apps/api/package.json ./apps/api/
 COPY libs/database/package.json ./libs/database/
-
-RUN pnpm install --frozen-lockfile
-
-# Copy source
 COPY apps/api/ ./apps/api/
 COPY libs/database/ ./libs/database/
 
-# Compile TypeScript → dist/
-RUN pnpm --filter @findash/api build
-
-# Create standalone production deployment (resolves workspace deps, prod-only)
-RUN pnpm --filter @findash/api --prod deploy --legacy /prod
+# Todo en una sola capa para que los symlinks de pnpm sean válidos
+RUN pnpm install --frozen-lockfile && \
+    pnpm --filter @findash/database db:generate && \
+    cd /app/apps/api && nest build
 
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
@@ -28,22 +23,20 @@ FROM node:22-alpine
 ENV NODE_ENV=production
 WORKDIR /app
 
-# OpenSSL is required by the Prisma query engine on Alpine
 RUN apk add --no-cache openssl
 
-# Production node_modules from pnpm deploy
-COPY --from=builder /prod/node_modules ./node_modules
+# Copiar node_modules completo (incluye prisma CLI + cliente generado con el schema)
+COPY --from=builder /app/node_modules ./node_modules
 
-# Compiled API output
+# Compiled API
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 
-# Prisma schema + migrations
+# Schema + migrations para prisma migrate deploy al arrancar
 COPY --from=builder /app/libs/database/prisma ./libs/database/prisma
 
-# Generate Prisma client inside the runner so the binary matches this image
-RUN ./node_modules/.bin/prisma generate --schema=./libs/database/prisma/schema.prisma
+# libs/database es referenciado por el symlink de pnpm en node_modules
+COPY --from=builder /app/libs/database ./libs/database
 
-# Startup script
 COPY apps/api/entrypoint.sh ./apps/api/entrypoint.sh
 RUN chmod +x ./apps/api/entrypoint.sh
 
