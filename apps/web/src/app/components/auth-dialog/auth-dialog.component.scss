@@ -20,9 +20,16 @@
 }
 
 .auth-tabs {
+  user-select: none;
   --mat-tab-header-active-label-text-color: var(--text);
   --mat-tab-header-inactive-label-text-color: var(--text-muted);
   --mat-tab-header-active-indicator-color: var(--accent);
+  --mat-tab-header-inactive-hover-state-layer-opacity: 0;
+  --mat-tab-header-active-hover-state-layer-opacity: 0;
+  --mat-tab-header-inactive-focus-state-layer-opacity: 0;
+  --mat-tab-header-active-focus-state-layer-opacity: 0;
+  --mat-tab-header-inactive-ripple-color: transparent;
+  --mat-tab-header-active-ripple-color: transparent;
 }
 
 .auth-form {

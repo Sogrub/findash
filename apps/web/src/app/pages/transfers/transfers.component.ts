@@ -3,7 +3,6 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { startWith } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -13,9 +12,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { AccountService } from '../../services/account.service';
 import { AuthStore } from '../../store/auth.store';
-import { TransactionItem, TransactionService } from '../../services/transaction.service';
+import { TransfersStore } from '../../store/transfers.store';
 
 @Component({
   selector: 'app-transfers',
@@ -38,21 +36,11 @@ import { TransactionItem, TransactionService } from '../../services/transaction.
 })
 export class TransfersComponent implements OnInit {
   protected readonly store = inject(AuthStore);
-  private readonly accountService = inject(AccountService);
-  private readonly transactionService = inject(TransactionService);
+  protected readonly transfersStore = inject(TransfersStore);
   private readonly fb = inject(FormBuilder);
 
-  // Navbar
   protected readonly avatarError = signal(false);
-  protected readonly balance = signal<number | null>(null);
-  protected readonly accountType = signal<string | null>(null);
-
-  // Form
   protected idempotencyKey = crypto.randomUUID();
-  protected readonly formLoading = signal(false);
-  protected readonly formError = signal<string | null>(null);
-  protected readonly formSuccess = signal(false);
-  protected readonly lastResult = signal<import('../../services/transaction.service').TransferResult | null>(null);
 
   protected readonly form: FormGroup = this.fb.group({
     toAccountNumber: ['', [Validators.required, Validators.minLength(3)]],
@@ -60,14 +48,13 @@ export class TransfersComponent implements OnInit {
     description: [''],
   });
 
-  // Reactive amount → commission preview
   private readonly amountValue = toSignal(
     this.form.get('amount')!.valueChanges.pipe(startWith(null)),
     { initialValue: null as number | null },
   );
 
   protected readonly commissionInfo = computed(() => {
-    const type = this.accountType();
+    const type = this.transfersStore.accountType();
     if (!type) return null;
 
     const raw = this.amountValue();
@@ -86,20 +73,15 @@ export class TransfersComponent implements OnInit {
     };
   });
 
-  // History
-  protected readonly transactions = signal<TransactionItem[]>([]);
-  protected readonly totalTx = signal(0);
-  protected readonly historyLoading = signal(true);
   protected txPage = 1;
   protected readonly txLimit = 8;
   protected get skeletonItems(): number[] { return Array.from({ length: this.txLimit }, (_, i) => i); }
 
   ngOnInit(): void {
-    this.loadBalance();
-    this.loadHistory();
+    this.transfersStore.clearSuccess();
+    this.transfersStore.loadBalance();
+    this.transfersStore.loadHistory(this.txPage, this.txLimit);
   }
-
-  // ── Navbar ──────────────────────────────────────────────────────────────────
 
   protected onAvatarError(): void { this.avatarError.set(true); }
 
@@ -109,77 +91,34 @@ export class TransfersComponent implements OnInit {
 
   protected logout(): void { this.store.logout(); }
 
-  private loadBalance(): void {
-    this.accountService.getMyAccount().subscribe({
-      next: acc => {
-        this.balance.set(acc.balance);
-        this.accountType.set(acc.type);
-      },
-    });
-  }
-
-  // ── Form ────────────────────────────────────────────────────────────────────
-
   onSubmit(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
-    if (this.formLoading()) return;
-
-    this.formLoading.set(true);
-    this.formError.set(null);
-    this.formSuccess.set(false);
+    if (this.transfersStore.transferLoading()) return;
 
     const { toAccountNumber, amount, description } = this.form.value as {
       toAccountNumber: string; amount: number; description: string;
     };
 
-    this.transactionService
-      .createTransfer(this.idempotencyKey, {
-        toAccountNumber: toAccountNumber.trim(),
-        amount,
-        description: description || undefined,
-      })
-      .subscribe({
-        next: (res) => {
-          this.formLoading.set(false);
-          this.formSuccess.set(true);
-          this.lastResult.set(res);
-          this.form.reset();
-          this.idempotencyKey = crypto.randomUUID();
-          this.loadBalance();
-          this.txPage = 1;
-          this.loadHistory();
-        },
-        error: (err: HttpErrorResponse) => {
-          this.formLoading.set(false);
-          const msg = (err.error as { message?: string })?.message;
-          this.formError.set(typeof msg === 'string' ? msg : 'Error al procesar la transferencia');
-        },
-      });
+    this.transfersStore.submitTransfer(
+      this.idempotencyKey,
+      { toAccountNumber: toAccountNumber.trim(), amount, description: description || undefined },
+      () => {
+        this.form.reset();
+        this.idempotencyKey = crypto.randomUUID();
+        this.txPage = 1;
+        this.transfersStore.loadHistory(1, this.txLimit);
+      },
+    );
   }
 
   onFormFocus(): void {
-    if (this.formSuccess()) {
-      this.formSuccess.set(false);
-      this.lastResult.set(null);
+    if (this.transfersStore.transferSuccess()) {
+      this.transfersStore.clearSuccess();
     }
   }
 
-  // ── History ─────────────────────────────────────────────────────────────────
-
   protected onPage(event: PageEvent): void {
     this.txPage = event.pageIndex + 1;
-    this.loadHistory();
-  }
-
-  private loadHistory(): void {
-    this.historyLoading.set(true);
-    this.transactionService.getMyTransactions(this.txPage, this.txLimit).subscribe({
-      next: res => {
-        this.transactions.set(res.data);
-        this.totalTx.set(res.meta.total);
-        this.historyLoading.set(false);
-      },
-      error: () => this.historyLoading.set(false),
-    });
+    this.transfersStore.loadHistory(this.txPage, this.txLimit);
   }
 }

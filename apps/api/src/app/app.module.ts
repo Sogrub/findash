@@ -8,6 +8,7 @@ import { PrismaModule } from "@app/common/database/prisma.module";
 import { AuthModule } from "@app/modules/auth/auth.module";
 import { AccountsModule } from "@app/modules/accounts/accounts.module";
 import { TransactionsModule } from "@app/modules/transactions/transactions.module";
+import { AdminModule } from "@app/modules/admin/admin.module";
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { TransactionsModule } from "@app/modules/transactions/transactions.modul
     AuthModule,
     AccountsModule,
     TransactionsModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

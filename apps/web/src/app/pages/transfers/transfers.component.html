@@ -16,8 +16,8 @@
           </div>
           <div class="user-info">
             <span class="user-name">{{ user.fullName }}</span>
-            @if (balance() !== null) {
-              <span class="user-balance">{{ balance() | currency:'USD':'symbol':'1.2-2' }}</span>
+            @if (transfersStore.balance() !== null) {
+              <span class="user-balance">{{ transfersStore.balance() | currency:'USD':'symbol':'1.2-2' }}</span>
             }
           </div>
         </div>
@@ -38,12 +38,11 @@
 
   <div class="transfers-layout">
 
-    <!-- ── Formulario ──────────────────────────────────────────────────────── -->
     <section class="form-panel">
       <div class="panel-title">Nueva transferencia</div>
 
-      @if (formSuccess()) {
-        @if (lastResult(); as tx) {
+      @if (transfersStore.transferSuccess()) {
+        @if (transfersStore.lastTransfer(); as tx) {
           <div class="success-banner">
             <div class="success-banner-header">
               <span class="success-icon">✓</span>
@@ -60,8 +59,8 @@
         }
       }
 
-      @if (formError()) {
-        <div class="error-banner">{{ formError() }}</div>
+      @if (transfersStore.transferError()) {
+        <div class="error-banner">{{ transfersStore.transferError() }}</div>
       }
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()" (focusin)="onFormFocus()">
@@ -119,8 +118,8 @@
           <input matInput formControlName="description" placeholder="Ej. Pago de arriendo" />
         </mat-form-field>
 
-        <button mat-flat-button type="submit" class="submit-btn" [disabled]="formLoading()">
-          @if (formLoading()) {
+        <button mat-flat-button type="submit" class="submit-btn" [disabled]="transfersStore.transferLoading()">
+          @if (transfersStore.transferLoading()) {
             <mat-spinner diameter="20" />
           } @else {
             Transferir
@@ -129,11 +128,10 @@
       </form>
     </section>
 
-    <!-- ── Historial ───────────────────────────────────────────────────────── -->
     <section class="history-panel">
       <div class="panel-title">Mis transferencias</div>
 
-      @if (historyLoading()) {
+      @if (transfersStore.historyLoading()) {
         <div class="tx-list">
           @for (i of skeletonItems; track i) {
             <div class="tx-item skeleton">
@@ -146,14 +144,14 @@
             </div>
           }
         </div>
-      } @else if (transactions().length === 0) {
+      } @else if (transfersStore.transactions().length === 0) {
         <div class="empty-state">
           <span class="empty-icon">↕</span>
           <p>Aún no tienes transferencias.</p>
         </div>
       } @else {
         <div class="tx-list">
-          @for (tx of transactions(); track tx.id) {
+          @for (tx of transfersStore.transactions(); track tx.id) {
             <div class="tx-item">
               <div class="tx-icon" [class.outgoing]="tx.direction === 'OUTGOING'" [class.incoming]="tx.direction === 'INCOMING'">
                 {{ tx.direction === 'OUTGOING' ? '↑' : '↓' }}
@@ -181,9 +179,9 @@
           }
         </div>
 
-        @if (totalTx() > txLimit) {
+        @if (transfersStore.totalTx() > txLimit) {
           <mat-paginator
-            [length]="totalTx()"
+            [length]="transfersStore.totalTx()"
             [pageSize]="txLimit"
             [pageIndex]="txPage - 1"
             [hidePageSize]="true"

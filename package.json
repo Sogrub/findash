@@ -17,7 +17,9 @@
     "api:test:cov": "pnpm --filter @findash/api test:cov",
     "web:dev": "pnpm --filter @findash/web start",
     "web:build": "pnpm --filter @findash/web build",
-    "web:test": "pnpm --filter @findash/web test"
+    "web:test": "pnpm --filter @findash/web test",
+    "web:test:cov": "pnpm --filter @findash/web test:cov",
+    "test:cov": "pnpm api:test:cov && pnpm web:test:cov"
   },
   "private": true,
   "devDependencies": {

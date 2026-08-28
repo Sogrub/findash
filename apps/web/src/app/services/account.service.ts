@@ -2,8 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../environments/environment';
 
-const API_URL = 'http://localhost:3000/api/v1';
+const API_URL = environment.apiUrl;
 
 export interface AccountInfo {
   accountNumber: string;
@@ -53,15 +54,20 @@ export class AccountService {
     limit: number;
     sortBy: AccountSortField;
     sortOrder: SortOrder;
+    search?: string;
+    status?: string;
   }): Observable<AccountListResponse> {
+    const queryParams: Record<string, string> = {
+      page: String(params.page),
+      limit: String(params.limit),
+      sortBy: params.sortBy,
+      sortOrder: params.sortOrder,
+    };
+    if (params.search) queryParams['search'] = params.search;
+    if (params.status) queryParams['status'] = params.status;
     return this.http.get<AccountListResponse>(`${API_URL}/accounts`, {
       headers: this.authHeaders,
-      params: {
-        page: String(params.page),
-        limit: String(params.limit),
-        sortBy: params.sortBy,
-        sortOrder: params.sortOrder,
-      },
+      params: queryParams,
     });
   }
 }

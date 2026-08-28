@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsEnum, IsInt, IsOptional, Max, Min } from "class-validator";
+import { IsEnum, IsInt, IsIn, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
 
 export enum AccountSortField {
   FULL_NAME = "fullName",
@@ -34,4 +34,13 @@ export class ListAccountsDto {
   @IsOptional()
   @IsEnum(SortOrder)
   sortOrder: SortOrder = SortOrder.DESC;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  search?: string;
+
+  @IsOptional()
+  @IsIn(["ACTIVE", "INACTIVE", "SUSPENDED"])
+  status?: string;
 }

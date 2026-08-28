@@ -95,3 +95,7 @@ input {
   border-radius: var(--radius-lg) !important;
   overflow: hidden;
 }
+
+.fd-auth-dialog .mat-mdc-tab .mat-focus-indicator::before {
+  display: none !important;
+}

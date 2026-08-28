@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, finalize, of, tap } from 'rxjs';
+import { environment } from '../../environments/environment';
 
-const API_URL = 'http://localhost:3000/api/v1';
+const API_URL = environment.apiUrl;
 const COOKIE_NAME = 'fd_token';
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60;
 

@@ -1,17 +1,21 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { AccountListItem, AccountService, AccountSortField, SortOrder } from '../../../services/account.service';
-import { TransactionService, TransactionItem } from '../../../services/transaction.service';
+import { AccountListItem, AccountSortField, SortOrder } from '../../../services/account.service';
 import { AuthStore } from '../../../store/auth.store';
+import { AccountsStore } from '../../../store/accounts.store';
 
 const AVATAR_COLORS = [
   '#5c6bc0', '#26a69a', '#ef5350', '#ab47bc',
@@ -30,6 +34,8 @@ const AVATAR_COLORS = [
     MatCardModule,
     MatChipsModule,
     MatIconModule,
+    MatInputModule,
+    MatFormFieldModule,
     MatPaginatorModule,
     MatSelectModule,
   ],
@@ -38,30 +44,23 @@ const AVATAR_COLORS = [
 })
 export class AdminAccountsComponent implements OnInit {
   protected readonly store = inject(AuthStore);
-  private readonly accountService = inject(AccountService);
-  private readonly txService = inject(TransactionService);
-
-  protected readonly accounts = signal<AccountListItem[]>([]);
-  protected readonly total = signal(0);
-  protected readonly loading = signal(false);
+  protected readonly accountsStore = inject(AccountsStore);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly searchSubject = new Subject<string>();
 
   protected readonly revealed = signal<Set<string>>(new Set());
   protected readonly copied = signal<string | null>(null);
 
-  // ── Sidebar ──────────────────────────────────────────────────────────────
-  protected readonly selectedAccount = signal<AccountListItem | null>(null);
-  protected readonly sidebarTxs = signal<TransactionItem[]>([]);
-  protected readonly sidebarTotal = signal(0);
-  protected readonly sidebarLoading = signal(false);
-  protected sidebarPage = 1;
-  protected readonly sidebarLimit = 10;
-  protected readonly sidebarSkeletons = Array.from({ length: 5 }, (_, i) => i);
-
   protected page = 1;
   protected limit = 5;
-  protected get skeletonItems(): number[] { return Array.from({ length: this.limit }, (_, i) => i); }
   protected sortBy: AccountSortField = 'createdAt';
   protected sortOrder: SortOrder = 'desc';
+  protected search = '';
+  protected statusFilter = '';
+  protected sidebarPage = 1;
+
+  protected get skeletonItems(): number[] { return Array.from({ length: this.limit }, (_, i) => i); }
+  protected readonly sidebarSkeletons = Array.from({ length: 5 }, (_, i) => i);
 
   readonly sortFields: { value: AccountSortField; label: string }[] = [
     { value: 'createdAt', label: 'Fecha de registro' },
@@ -71,6 +70,11 @@ export class AdminAccountsComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.searchSubject.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(() => { this.page = 1; this.load(); });
     this.load();
   }
 
@@ -83,6 +87,22 @@ export class AdminAccountsComponent implements OnInit {
   protected onSortChange(): void {
     this.page = 1;
     this.load();
+  }
+
+  protected onSearchChange(value: string): void {
+    this.search = value;
+    this.searchSubject.next(value);
+  }
+
+  private load(): void {
+    this.accountsStore.load({
+      page: this.page,
+      limit: this.limit,
+      sortBy: this.sortBy,
+      sortOrder: this.sortOrder,
+      search: this.search || undefined,
+      status: this.statusFilter || undefined,
+    });
   }
 
   protected initials(name: string): string {
@@ -118,50 +138,19 @@ export class AdminAccountsComponent implements OnInit {
     });
   }
 
-  // ── Sidebar ──────────────────────────────────────────────────────────────
-
   protected openSidebar(account: AccountListItem): void {
-    this.selectedAccount.set(account);
     this.sidebarPage = 1;
-    this.loadSidebarTxs();
+    this.accountsStore.openSidebar(account);
   }
 
   protected closeSidebar(): void {
-    this.selectedAccount.set(null);
-    this.sidebarTxs.set([]);
+    this.accountsStore.closeSidebar();
   }
 
   protected onSidebarPage(event: PageEvent): void {
     this.sidebarPage = event.pageIndex + 1;
-    this.loadSidebarTxs();
-  }
-
-  private loadSidebarTxs(): void {
-    const account = this.selectedAccount();
-    if (!account) return;
-    this.sidebarLoading.set(true);
-    this.txService.getAccountTransactions(account.id, this.sidebarPage, this.sidebarLimit).subscribe({
-      next: (res) => {
-        this.sidebarTxs.set(res.data);
-        this.sidebarTotal.set(res.meta.total);
-        this.sidebarLoading.set(false);
-      },
-      error: () => this.sidebarLoading.set(false),
-    });
-  }
-
-  private load(): void {
-    this.loading.set(true);
-    this.accountService
-      .listAccounts({ page: this.page, limit: this.limit, sortBy: this.sortBy, sortOrder: this.sortOrder })
-      .subscribe({
-        next: (res) => {
-          this.accounts.set(res.data);
-          this.total.set(res.meta.total);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
+    const account = this.accountsStore.selectedAccount();
+    if (account) this.accountsStore.loadSidebarTxs(account.id, this.sidebarPage);
   }
 
   protected logout(): void {

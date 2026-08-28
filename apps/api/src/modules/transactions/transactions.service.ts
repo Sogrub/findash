@@ -11,10 +11,11 @@ import { AntiFraudService } from "./services/anti-fraud.service";
 import { TransactionBuilder } from "./builders/transaction.builder";
 import { resolveCommissionStrategy } from "./strategies/commission.factory";
 import { CreateTransferDto } from "./dto/create-transfer.dto";
+import { lockBalanceQuery } from "./constants/queries";
 
 const ACCOUNT_INCLUDE = {
   sourceAccount: { select: { accountNumber: true, user: { select: { fullName: true } } } },
-  destAccount:   { select: { accountNumber: true, user: { select: { fullName: true } } } },
+  destAccount: { select: { accountNumber: true, user: { select: { fullName: true } } } },
 } as const;
 
 @Injectable()
@@ -64,10 +65,9 @@ export class TransactionsService {
     // ── 5. Atomic transfer with pessimistic lock ──────────────────────────────
     try {
       return await this.prisma.$transaction(async (tx) => {
-        // Pessimistic lock: cast column to text to avoid Prisma parameter binding issues
-        const [locked] = await tx.$queryRaw<{ balance: string }[]>`
-          SELECT balance FROM accounts WHERE id::text = ${sourceAccount.id} FOR UPDATE
-        `;
+        const [locked] = await tx.$queryRaw<{ balance: string }[]>(
+          lockBalanceQuery(sourceAccount.id),
+        );
 
         // ── 6. Builder assembles the transaction record ───────────────────────
         const txData = new TransactionBuilder()
@@ -191,18 +191,18 @@ export class TransactionsService {
     idempotencyKey: string;
     createdAt: Date;
     sourceAccount: { accountNumber: string; user: { fullName: string } };
-    destAccount:   { accountNumber: string; user: { fullName: string } };
+    destAccount: { accountNumber: string; user: { fullName: string } };
   }) {
     return {
-      id:            record.id,
-      fromAccount:   record.sourceAccount.accountNumber,
-      fromName:      record.sourceAccount.user.fullName,
-      toAccount:     record.destAccount.accountNumber,
-      toName:        record.destAccount.user.fullName,
-      amount:        Number(record.amount),
-      commission:    Number(record.commission),
+      id: record.id,
+      fromAccount: record.sourceAccount.accountNumber,
+      fromName: record.sourceAccount.user.fullName,
+      toAccount: record.destAccount.accountNumber,
+      toName: record.destAccount.user.fullName,
+      amount: Number(record.amount),
+      commission: Number(record.commission),
       totalDeducted: Number(record.totalDeducted),
-      status:        record.status,
+      status: record.status,
       authorizationCode: record.authorizationCode,
       createdAt: record.createdAt,
     };

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "@app/common/database/prisma.service";
 import { AccountSortField, ListAccountsDto } from "./dto/list-accounts.dto";
 
@@ -23,8 +24,12 @@ export class AccountsService {
   }
 
   async listAccounts(dto: ListAccountsDto) {
-    const { page, limit, sortBy, sortOrder } = dto;
+    const { page, limit, sortBy, sortOrder, search, status } = dto;
     const skip = (page - 1) * limit;
+
+    const where: Prisma.AccountWhereInput = {};
+    if (search) where.user = { document: { contains: search, mode: "insensitive" } };
+    if (status) where.status = status as Prisma.EnumAccountStatusFilter | undefined;
 
     const orderBy =
       sortBy === AccountSortField.FULL_NAME
@@ -36,6 +41,7 @@ export class AccountsService {
         skip,
         take: limit,
         orderBy,
+        where,
         select: {
           id: true,
           accountNumber: true,
@@ -45,7 +51,7 @@ export class AccountsService {
           user: { select: { fullName: true } },
         },
       }),
-      this.prisma.account.count(),
+      this.prisma.account.count({ where }),
     ]);
 
     return {

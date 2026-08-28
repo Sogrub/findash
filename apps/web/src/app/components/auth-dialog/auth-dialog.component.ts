@@ -6,6 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthStore } from '../../store/auth.store';
+import { environment } from '../../../environments/environment';
 
 export interface AuthDialogData {
   tab: 'login' | 'register';
@@ -114,5 +115,5 @@ export class AuthDialogComponent {
     this.store.resetPassword(email, code, newPassword, () => this.view.set('auth'));
   }
 
-  readonly googleAuthUrl = 'http://localhost:3000/api/v1/auth/google';
+  readonly googleAuthUrl = `${environment.apiUrl}/auth/google`;
 }

@@ -17,8 +17,11 @@
           </div>
           <div class="user-info">
             <span class="user-name">{{ user.fullName }}</span>
-            @if (user.role === 'CLIENT' && balance() !== null) {
-              <span class="user-balance">{{ balance() | currency:'USD':'symbol':'1.2-2' }}</span>
+            @if (user.role === 'CLIENT' && transfersStore.balance() !== null) {
+              <span class="user-balance">{{ transfersStore.balance() | currency:'USD':'symbol':'1.2-2' }}</span>
+            }
+            @if (user.role === 'ADMIN') {
+              <span class="user-role">Administrador</span>
             }
           </div>
         </div>
@@ -35,6 +38,89 @@
 </mat-toolbar>
 
 <div class="dashboard-body">
-  <h1>Dashboard</h1>
-  <p class="coming-soon">Próximamente: cuentas, transacciones y KPIs.</p>
+
+  @if (store.currentUser()?.role === 'ADMIN') {
+    <div class="page-header">
+      <h1>Dashboard</h1>
+      <p class="subtitle">Métricas en tiempo real de la plataforma.</p>
+    </div>
+
+    @if (metricsStore.loading()) {
+      <div class="kpi-grid">
+        @for (i of [0,1,2,3]; track i) {
+          <div class="kpi-card skeleton">
+            <div class="sk-label"></div>
+            <div class="sk-value"></div>
+          </div>
+        }
+      </div>
+      <div class="chart-card skeleton">
+        <div class="sk-chart-title"></div>
+        <div class="sk-chart-body"></div>
+      </div>
+    } @else if (metricsStore.metrics(); as m) {
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Volumen total</span>
+          <span class="kpi-value">{{ m.kpis.totalVolume | currency:'USD':'symbol':'1.2-2' }}</span>
+          <span class="kpi-sub">en transacciones completadas</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Completadas</span>
+          <span class="kpi-value accent-green">{{ m.kpis.completedCount | number }}</span>
+          <span class="kpi-sub">transacciones exitosas</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Fallidas / Rechazadas</span>
+          <span class="kpi-value" [class.accent-red]="m.kpis.failedCount > 0">
+            {{ m.kpis.failedCount | number }}
+          </span>
+          <span class="kpi-sub">requieren revisión</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Cuentas activas</span>
+          <span class="kpi-value accent-blue">{{ m.kpis.activeAccounts | number }}</span>
+          <span class="kpi-sub">usuarios con cuenta</span>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <p class="chart-title">Volumen por tipo de cuenta</p>
+            <p class="chart-subtitle">Monto total transaccionado desde cuentas BASIC · CORPORATE · PREMIUM</p>
+          </div>
+          <div class="chart-legend">
+            @for (item of m.byAccountType; track item.type) {
+              <div class="legend-item">
+                <span class="legend-dot" [class]="'dot-' + item.type.toLowerCase()"></span>
+                <span class="legend-label">{{ item.type }}</span>
+                <span class="legend-count">{{ item.count }} tx</span>
+              </div>
+            }
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas #chartCanvas></canvas>
+        </div>
+      </div>
+    }
+  }
+
+  @if (store.currentUser()?.role === 'CLIENT') {
+    <div class="page-header">
+      <h1>Dashboard</h1>
+      <p class="subtitle">Bienvenido a tu billetera digital.</p>
+    </div>
+    <div class="client-card">
+      <div class="client-balance-label">Saldo disponible</div>
+      @if (transfersStore.balance() !== null) {
+        <div class="client-balance">{{ transfersStore.balance() | currency:'USD':'symbol':'1.2-2' }}</div>
+      } @else {
+        <div class="client-balance sk-balance-line"></div>
+      }
+      <a mat-flat-button routerLink="/transfers" class="client-action">Transferir</a>
+    </div>
+  }
+
 </div>

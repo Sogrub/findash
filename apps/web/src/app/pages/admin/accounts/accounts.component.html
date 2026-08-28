@@ -19,10 +19,25 @@
   <div class="page-header">
     <div>
       <h1>Cuentas</h1>
-      <p class="subtitle">{{ total() }} cuenta{{ total() !== 1 ? 's' : '' }} registrada{{ total() !== 1 ? 's' : '' }}</p>
+      <p class="subtitle">{{ accountsStore.total() }} cuenta{{ accountsStore.total() !== 1 ? 's' : '' }} registrada{{ accountsStore.total() !== 1 ? 's' : '' }}</p>
     </div>
 
     <div class="sort-controls">
+      <mat-form-field appearance="outline" class="sort-select">
+        <mat-label>Buscar por documento</mat-label>
+        <input matInput [ngModel]="search" (ngModelChange)="onSearchChange($event)" placeholder="Número de documento" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="sort-select">
+        <mat-label>Estado</mat-label>
+        <mat-select [(ngModel)]="statusFilter" (ngModelChange)="onSortChange()">
+          <mat-option value="">Todos</mat-option>
+          <mat-option value="ACTIVE">Activa</mat-option>
+          <mat-option value="INACTIVE">Inactiva</mat-option>
+          <mat-option value="SUSPENDED">Suspendida</mat-option>
+        </mat-select>
+      </mat-form-field>
+
       <mat-form-field appearance="outline" class="sort-select">
         <mat-label>Ordenar por</mat-label>
         <mat-select [(ngModel)]="sortBy" (ngModelChange)="onSortChange()">
@@ -42,7 +57,7 @@
     </div>
   </div>
 
-  @if (loading()) {
+  @if (accountsStore.loading()) {
     <div class="accounts-grid">
       @for (i of skeletonItems; track i) {
         <div class="skeleton-card">
@@ -62,12 +77,12 @@
     </div>
   } @else {
     <div class="accounts-grid">
-      @for (account of accounts(); track account.accountNumber) {
+      @for (account of accountsStore.accounts(); track account.accountNumber) {
         <mat-card
           class="account-card"
           appearance="outlined"
           (click)="openSidebar(account)"
-          [class.active]="selectedAccount()?.id === account.id">
+          [class.active]="accountsStore.selectedAccount()?.id === account.id">
           <mat-card-header>
             <div mat-card-avatar class="avatar" [style.background]="avatarColor(account.fullName)">
               {{ initials(account.fullName) }}
@@ -107,7 +122,7 @@
 
     <mat-paginator
       class="paginator"
-      [length]="total()"
+      [length]="accountsStore.total()"
       [pageSize]="limit"
       [pageIndex]="page - 1"
       [pageSizeOptions]="[5, 10, 25, 50]"
@@ -117,14 +132,12 @@
   }
 </div>
 
-<!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
-@if (selectedAccount(); as account) {
+@if (accountsStore.selectedAccount(); as account) {
   <div class="sidebar-overlay" (click)="closeSidebar()"></div>
 
   <aside class="sidebar-panel">
     <button class="sidebar-close" (click)="closeSidebar()" title="Cerrar">✕</button>
 
-    <!-- Account header -->
     <div class="sidebar-account">
       <div class="sidebar-avatar" [style.background]="avatarColor(account.fullName)">
         {{ initials(account.fullName) }}
@@ -147,12 +160,12 @@
 
     <div class="sidebar-section-title">
       Transacciones
-      @if (sidebarTotal() > 0) {
-        <span class="sidebar-count">{{ sidebarTotal() }}</span>
+      @if (accountsStore.sidebarTotal() > 0) {
+        <span class="sidebar-count">{{ accountsStore.sidebarTotal() }}</span>
       }
     </div>
 
-    @if (sidebarLoading()) {
+    @if (accountsStore.sidebarLoading()) {
       <div class="sidebar-tx-list">
         @for (i of sidebarSkeletons; track i) {
           <div class="stx-item skeleton">
@@ -165,14 +178,14 @@
           </div>
         }
       </div>
-    } @else if (sidebarTxs().length === 0) {
+    } @else if (accountsStore.sidebarTxs().length === 0) {
       <div class="sidebar-empty">
         <span class="empty-icon">📭</span>
         <p>Sin transacciones registradas</p>
       </div>
     } @else {
       <div class="sidebar-tx-list">
-        @for (tx of sidebarTxs(); track tx.id) {
+        @for (tx of accountsStore.sidebarTxs(); track tx.id) {
           <div class="stx-item">
             <div class="stx-icon" [class]="tx.direction.toLowerCase()">
               {{ tx.direction === 'OUTGOING' ? '↑' : '↓' }}
@@ -205,8 +218,8 @@
 
       <mat-paginator
         class="sidebar-paginator"
-        [length]="sidebarTotal()"
-        [pageSize]="sidebarLimit"
+        [length]="accountsStore.sidebarTotal()"
+        [pageSize]="accountsStore.sidebarLimit"
         [pageIndex]="sidebarPage - 1"
         [pageSizeOptions]="[10, 25]"
         (page)="onSidebarPage($event)"
